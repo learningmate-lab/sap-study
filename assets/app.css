@@ -875,7 +875,7 @@ button, .thumb, .qz-opt, summary { touch-action: manipulation; -webkit-tap-highl
 #chatLog .md th, #chatLog .md td { min-width: 4.5em; word-break: keep-all; }
 
 /* ---------- slides: no empty box — the slide fits the stage; in tall columns it pins to the top at full width ---------- */
-.stage-img-wrap { background: transparent; border-color: transparent; touch-action: pan-y pinch-zoom; }
+.stage-img-wrap { background: transparent; border-color: transparent; touch-action: pan-y; } /* pinch on the slide = slide zoom (zoomkit); elsewhere native pinch-zoom stays */
 .stage-img-wrap img { border-radius: 6px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
 .thumbs { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 .slides.fitw .stage { flex: none; padding-bottom: 12px; }
@@ -932,3 +932,54 @@ button, .thumb, .qz-opt, summary { touch-action: manipulation; -webkit-tap-highl
 
 /* settings: bundled API key notice (encrypted Pages build with LM_KEY_FILE) */
 .key-bundle { margin: 6px 0 4px; padding: 7px 10px; border-radius: 9px; background: var(--accent-soft); color: var(--text); font-size: 13px; line-height: 1.5; }
+
+/* ---------- 글자·화면 크기: content zoom (--cz from the top-bar 가 control / two-finger pinch on the reading area) ----------
+   CSS zoom reflows like browser zoom but only inside the reading area and the tutor's messages, so the shell (top bar, tabs,
+   drawers) keeps its size and nothing needs panning. The slide image is not content-zoomed (it fits its frame and has its
+   own pinch zoom); the slide bar, page text and thumbnails are. Text inputs never render below 16px on touch (iOS focus-zoom). */
+:root { --cz: 1; --czi: 1; --czm: 1; }
+.view > :not(.slides), .slides .stage-bar, .slides .pagetext, .slides .thumbs, #chatLog > * { zoom: var(--cz); }
+.input-row textarea { font-size: calc(15px * var(--czi)); }
+body.cz-pinch #view, body.cz-pinch #chatLog { touch-action: pan-x pan-y; } /* the pinch there resizes text (option in the 가 popover) */
+.zoom-btn { width: auto; min-width: 34px; padding: 0 9px; display: inline-flex; align-items: center; gap: 5px; font-weight: 700; color: var(--text); }
+.zoom-btn .zb-a { font-size: 15px; line-height: 1; }
+.zoom-btn .zb-v { font-size: 12.5px; font-weight: 600; color: var(--muted); font-variant-numeric: tabular-nums; }
+.zoom-btn.on, .zoom-btn[aria-expanded="true"] { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); color: var(--accent); }
+.zoom-btn.on .zb-v { color: var(--accent); }
+.zoom-pop { position: fixed; z-index: 90; width: min(330px, calc(100vw - 16px)); box-sizing: border-box; display: flex; flex-direction: column; gap: 10px;
+  padding: 14px 14px 12px; background: var(--panel); color: var(--text); border: 1px solid var(--line-2); border-radius: 14px; box-shadow: var(--shadow); }
+.zoom-pop[hidden] { display: none; }
+.zp-h { font-weight: 700; font-size: 14.5px; }
+.zp-row { display: grid; grid-template-columns: 56px 1fr 56px; gap: 8px; }
+.zp-row button { min-height: 46px; border: 1px solid var(--line); background: var(--inset); color: var(--text); border-radius: 10px; font-size: 22px; font-weight: 700; touch-action: manipulation; }
+.zp-row .zp-v { font-size: 17px; font-variant-numeric: tabular-nums; }
+.zp-row button:hover:not(:disabled) { border-color: var(--line-2); background: var(--inset-2); }
+.zp-row button:disabled { opacity: .38; cursor: default; }
+.zp-r { width: 100%; min-height: 32px; margin: 0; accent-color: var(--accent); }
+.zoom-pop .check { margin: 0; align-items: center; font-size: 13.5px; min-height: 40px; }
+.zoom-pop .check input { margin: 0; width: 20px; height: 20px; flex: none; }
+.zp-note { margin: 0; font-size: 12.5px; line-height: 1.55; color: var(--muted); }
+.zp-reset { align-self: flex-end; }
+@media (hover: hover) and (pointer: fine) { .zp-pinch, .zp-touch { display: none; } }
+/* phones: the top bar keeps one row — compact 가 button, tighter gaps / subject tabs */
+@media (max-width: 599.98px) { .zoom-btn .zb-v { display: none; } .topbar { gap: 4px; } .icon-btn.zoom-btn { width: 34px; min-width: 0; padding: 0; justify-content: center; } }
+@media (pointer: coarse) and (max-width: 599.98px) { .icon-btn.zoom-btn { width: 44px; } .seg button { padding-left: 8px; padding-right: 8px; } .seg { padding: 2px; } }
+@media (pointer: coarse) {
+  .icon-btn.zoom-btn { width: auto; min-width: 44px; height: 44px; padding: 0 11px; }
+  .input-row textarea#input { font-size: calc(16px * var(--czi)); }
+  .view input, .view textarea, .view select { font-size: calc(16px / var(--czm)); }
+}
+
+/* ---------- slide zoom: pinch up to 4×, pan while zoomed, double-tap 2× ↔ fit (zoomkit slideZoom) ---------- */
+.stage-img-wrap.zoomed, .slides.fitw .stage-img-wrap.zoomed { overflow: hidden; touch-action: none; cursor: grab; }
+.stage-img-wrap.zoomed.dragging { cursor: grabbing; }
+.stage-img-wrap.zoomed .nav-arrow { opacity: 0 !important; pointer-events: none; }
+@media (hover: hover) { .stage-img-wrap:not(.zoomed):not(.tall) img { cursor: zoom-in; } }
+.sz-hud { position: absolute; top: 8px; right: 8px; z-index: 3; display: flex; align-items: center; gap: 4px; padding: 4px;
+  border-radius: 12px; background: rgba(18, 30, 36, .8); color: #fff; box-shadow: 0 4px 16px rgba(0, 0, 0, .25); }
+.sz-hud[hidden] { display: none; }
+.sz-hud button { min-width: 40px; height: 40px; padding: 0 10px; border: 0; border-radius: 9px; background: rgba(255, 255, 255, .14); color: #fff; font-size: 19px; font-weight: 700; touch-action: manipulation; }
+.sz-hud button:hover { background: rgba(255, 255, 255, .26); }
+.sz-hud .sz-fit { font-size: 14px; }
+.sz-hud .sz-v { min-width: 50px; text-align: center; font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+@media (pointer: coarse) { .sz-hud button { min-width: 44px; height: 44px; } }
