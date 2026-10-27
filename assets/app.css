@@ -574,6 +574,11 @@ li.gl .def { color: var(--text); line-height: 1.68; }
 .explain .tbl td, .explain .tbl th { word-break: keep-all; }
 .explain .codebox, .explain pre { margin: 10px 0 12px; }
 @media (max-width: 700px) { .explain { padding: 11px 14px 6px; } .explain .ex-b { line-height: 1.75; } }
+/* phone: long inline code (annotations, API names) may wrap inside explain tables instead of pushing columns off-screen */
+@media (max-width: 700px) {
+  .explain .tbl th, .explain .tbl td { padding: 7px 8px; font-size: 13.5px; }
+  .explain .tbl code { white-space: normal; overflow-wrap: anywhere; word-break: break-all; }
+}
 
 
 /* ===== SAP ABAP·Fiori additions (src/sap.css) ===== */
@@ -924,3 +929,6 @@ button, .thumb, .qz-opt, summary { touch-action: manipulation; -webkit-tap-highl
 /* touch below desk: one-row tutor header (export to a .md file is a desk feature) */
 @media (pointer: coarse) and (max-width: 1399.98px) { #btnExport { display: none; } .chat-head { padding: 8px 10px 8px 14px; } }
 @media (pointer: coarse) and (max-width: 700px) { .qz-dots.exam { top: 104px; } }
+
+/* settings: bundled API key notice (encrypted Pages build with LM_KEY_FILE) */
+.key-bundle { margin: 6px 0 4px; padding: 7px 10px; border-radius: 9px; background: var(--accent-soft); color: var(--text); font-size: 13px; line-height: 1.5; }

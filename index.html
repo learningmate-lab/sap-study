@@ -28,6 +28,7 @@
   .gate-err.info { color: var(--muted); }
   #btnLock { width: auto; padding: 0 10px; font-size: 13px; gap: 4px; display: inline-flex; align-items: center; }
   @media (max-width: 599.98px) { #btnLock .lock-l { display: none; } }
+  @media (pointer: coarse) { #btnLock { height: 44px; } }
 </style>
 </head>
 <body>
@@ -111,6 +112,7 @@
     <div class="modal-head"><h2 id="setTitle">설정</h2><button class="icon-btn sm" data-close>✕</button></div>
     <label class="field"><span>Anthropic API 키</span>
       <div class="key-row"><input id="setKey" type="password" autocomplete="off" spellcheck="false" placeholder="sk-ant-..."><button class="ghost" id="btnShowKey" type="button">보기</button></div>
+      <div class="key-bundle" id="keyBundle" hidden></div>
       <small>키는 <b>이 브라우저의 localStorage에만</b> 저장돼요. 파일이나 다른 곳으로 보내지 않고, 요청할 때 api.anthropic.com에만 직접 보내요.</small>
     </label>
     <label class="field"><span>모델</span>
@@ -155,8 +157,8 @@
 <script>
 (function () {
   'use strict';
-  var SALT = 'WpXqk79h8ha8Ph6RAqbrNw==', ITER = 600000, LS = 'sapai:vault';
-  var subtle = window.crypto && window.crypto.subtle, KEY = null;
+  var SALT = 'WpXqk79h8ha8Ph6RAqbrNw==', ITER = 600000, LS = 'sapai:vault', HASKEY = false;
+  var subtle = window.crypto && window.crypto.subtle, KEY = null, BK = '';
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'), pw = document.getElementById('gatePw'),
     rem = document.getElementById('gateRemember'), btn = document.getElementById('gateBtn'), err = document.getElementById('gateErr');
   function b64(s) { var b = atob(s), u = new Uint8Array(b.length); for (var i = 0; i < b.length; i++) u[i] = b.charCodeAt(i); return u; }
@@ -168,8 +170,14 @@
       .then(function (buf) { return decrypt(key, buf); });
   }
   function verify(key) { return fetchDec(key, 'assets/check.bin').then(function (p) { return new TextDecoder().decode(p) === 'SAPAI-CHECK-1'; }, function (e) { if (e && e.name === 'OperationError') return false; throw e; }); }
+  // bundled API key (optional): decrypted in memory only; the app reads it through this accessor and never shows it
+  window.STUDY_VAULT_KEY = function () { return BK; };
+  function loadKey() {
+    if (!HASKEY) return Promise.resolve();
+    return fetchDec(KEY, 'assets/key.bin').then(function (p) { BK = new TextDecoder().decode(p).trim(); }, function (e) { console.warn('번들 API 키를 열지 못했어요', e && e.name); });
+  }
   // decrypt a packed script and run it via a Blob URL; resolves after it executed
-  window.SAPAI_LOAD = function (src) {
+  window.VAULT_LOAD = function (src) {
     if (!KEY) return Promise.reject(new Error('잠겨 있어요'));
     return fetchDec(KEY, bin(src)).then(function (plain) {
       return new Promise(function (res, rej) {
@@ -183,8 +191,8 @@
   };
   function boot() {
     gate.hidden = true;
-    var chain = Promise.resolve();
-    ['assets/data/manifest.js', 'assets/quiz.js', 'assets/app.js'].forEach(function (s) { chain = chain.then(function () { return window.SAPAI_LOAD(s); }); });
+    var chain = loadKey();
+    ["assets/data/manifest.js","assets/quiz.js","assets/app.js"].forEach(function (s) { chain = chain.then(function () { return window.VAULT_LOAD(s); }); });
     return chain.catch(function (e) { console.error(e); showGate(e.message || String(e)); });
   }
   function showGate(msg, info) { gate.hidden = false; err.textContent = msg || ''; err.className = 'gate-err' + (info ? ' info' : ''); btn.disabled = false; btn.textContent = '열기'; setTimeout(function () { pw.focus(); }, 0); }
@@ -206,8 +214,8 @@
       })
       .catch(function (e) { console.error(e); showGate('열지 못했어요: ' + (e.message || e)); });
   });
-  document.getElementById('btnLock').addEventListener('click', function () { forget(); KEY = null; location.reload(); });
-  // remembered key (raw AES key only, never the password)
+  document.getElementById('btnLock').addEventListener('click', function () { forget(); KEY = null; BK = ''; location.reload(); });
+  // remembered key (raw AES key only, never the password or the API key)
   var saved = null; try { saved = JSON.parse(localStorage.getItem(LS) || 'null'); } catch (e) { }
   if (subtle && saved && saved.salt === SALT && saved.key) {
     subtle.importKey('raw', b64(saved.key), { name: 'AES-GCM' }, true, ['decrypt'])
