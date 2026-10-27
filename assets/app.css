@@ -559,6 +559,22 @@ li.gl .def { color: var(--text); line-height: 1.68; }
 .tiles-wrap { margin: 14px 0; } .tiles-wrap .tiles { margin-top: 0; }
 .diagram svg, .diagram svg * { font-feature-settings: "calt" 0; font-variant-ligatures: no-contextual; }
 
+/* --- :::explain — teacher-style explanation next to a figure (paragraphs, numbered walk-through, tables, short code) --- */
+.explain { margin: 16px 0 18px; padding: 13px 20px 8px; background: var(--panel); border: 1px solid var(--line-2); border-left: 5px solid var(--accent); border-radius: 12px; }
+.explain .ex-h { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--accent); margin-bottom: 2px; word-break: keep-all; }
+.explain .ex-ic { font-size: 16px; }
+.explain .ex-b { color: var(--text); line-height: 1.82; word-break: keep-all; overflow-wrap: break-word; }
+.explain .ex-b > :first-child { margin-top: .35em; }
+.explain .ex-b p { margin: .55em 0 .75em; }
+.explain .ex-b ol, .explain .ex-b ul { margin: .4em 0 .8em; padding-left: 1.5em; }
+.explain .ex-b li { margin: .3em 0; }
+.explain .ex-b ol > li::marker { color: var(--accent); font-weight: 800; }
+.explain .ex-b strong { color: var(--text); background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accent) 22%, transparent) 62%); padding: 0 1px; }
+.explain .tbl { margin: 12px 0 14px; }
+.explain .tbl td, .explain .tbl th { word-break: keep-all; }
+.explain .codebox, .explain pre { margin: 10px 0 12px; }
+@media (max-width: 700px) { .explain { padding: 11px 14px 6px; } .explain .ex-b { line-height: 1.75; } }
+
 
 /* ===== SAP ABAP·Fiori additions (src/sap.css) ===== */
 /* vendored web font (no CDN at load time) */
@@ -764,3 +780,147 @@ button.qz-opt:not(:disabled):hover { border-color: var(--accent); background: va
 .explain .tbl td, .explain .tbl th { word-break: keep-all; }
 .explain .codebox, .explain pre { margin: 10px 0 12px; }
 @media (max-width: 700px) { .explain { padding: 11px 14px 6px; } .explain .ex-b { line-height: 1.75; } }
+
+/* ===================================================================================================
+   Tablet / touch (iPad) — content first. Breakpoints match the panel logic patched into app.js:
+     desk   ≥1400px                          nav + tutor docked; ☰ / ✦ 튜터 collapse them (remembered per viewer)
+     dock   1000–1399px landscape            nav = drawer; tutor = docked side pane, closed by default
+     drawer 600–1399px portrait, 600–999px   nav = left drawer; tutor = right slide-over drawer; scrim behind
+     sheet  <600px                           nav = left drawer; tutor = bottom sheet
+   =================================================================================================== */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+:root { --top-h: calc(54px + env(safe-area-inset-top, 0px)); --kb: 0px; }
+#app { height: 100vh; height: calc(100dvh - var(--kb)); }
+.topbar { height: var(--top-h); padding-top: env(safe-area-inset-top, 0px); padding-left: max(14px, env(safe-area-inset-left, 0px)); padding-right: max(14px, env(safe-area-inset-right, 0px)); }
+button, .thumb, .qz-opt, summary { touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+/* panel toggles in the top bar */
+.tutor-btn { width: auto; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px; font-weight: 700; font-size: 14px; color: var(--text); }
+.tutor-btn .spark { font-size: 15px; }
+#btnMenu.on, .tutor-btn.on { background: var(--accent-soft); border-color: color-mix(in srgb, var(--accent) 60%, var(--line)); color: var(--accent); }
+.side-close { display: none; }
+#fabChat { display: none !important; } /* the top-bar ✦ 튜터 button replaces the floating one */
+.scrim { display: none; position: fixed; left: 0; right: 0; top: var(--top-h); bottom: 0; z-index: 45; background: rgba(6, 12, 15, .45); -webkit-tap-highlight-color: transparent; }
+.sidebar, .chat-log, .thumbs, .modal-card, .view, .quick { overscroll-behavior: contain; }
+.modal-card { max-height: 92vh; max-height: 92dvh; }
+.lightbox-card { max-height: 94vh; max-height: 94dvh; }
+.lightbox-card img { max-height: calc(94vh - 70px); max-height: calc(94dvh - 70px); }
+.composer { padding-bottom: max(10px, env(safe-area-inset-bottom, 0px)); }
+.thumbs { padding-bottom: max(14px, env(safe-area-inset-bottom, 0px)); }
+
+/* ---------- desk (≥1400): collapsible panes; freed space goes to the content ---------- */
+@media (min-width: 1400px) {
+  body.nav-collapsed .sidebar { display: none; }
+  body.chat-collapsed .chat, body.chat-collapsed .resizer { display: none; }
+  #btnCloseChat { display: none; } /* the top-bar ✦ 튜터 toggles it; keeps the desktop tutor header as it was */
+  body.nav-collapsed .note, body.chat-collapsed .note { max-width: 1180px; }
+  body.nav-collapsed .note .sec > .md > :is(p, ul, ol, h3, h4, blockquote, .callout, .explain, ul.keys, details.more),
+  body.chat-collapsed .note .sec > .md > :is(p, ul, ol, h3, h4, blockquote, .callout, .explain, ul.keys, details.more),
+  body.nav-collapsed .note .hero-body > :is(p, ul, ol), body.chat-collapsed .note .hero-body > :is(p, ul, ol) { max-width: 52em; }
+}
+
+/* ---------- below desk: the chapter list is a drawer ---------- */
+@media (max-width: 1399.98px) {
+  .sidebar { position: fixed; top: var(--top-h); bottom: 0; left: 0; z-index: 50; width: min(320px, 86vw); transform: translateX(-104%); visibility: hidden;
+    transition: transform .22s ease, visibility 0s linear .22s; box-shadow: 12px 0 40px rgba(0, 0, 0, .28); padding-left: env(safe-area-inset-left, 0px); padding-bottom: env(safe-area-inset-bottom, 0px); }
+  body.side-open .sidebar { transform: none; visibility: visible; transition: transform .22s ease; }
+  body.side-open .scrim { display: block; }
+  .side-close { display: inline-grid; position: absolute; top: 8px; right: 10px; z-index: 1; }
+  .side-title { padding-right: 60px; min-height: 52px; }
+  .resizer { display: none; }
+  .chat-head .chat-scope { display: none; }
+  /* content fills the screen; prose keeps a reading measure, figures / tables / diagrams use the full card */
+  .note { max-width: 1180px; }
+  .note .sec > .md > :is(p, ul, ol, h3, h4, blockquote, .callout, .explain, ul.keys, details.more), .note .hero-body > :is(p, ul, ol) { max-width: 52em; }
+  .qz-wrap { max-width: 980px; }
+}
+
+/* ---------- drawer: tutor slides over from the right (portrait tablets, narrow landscape) ---------- */
+@media (min-width: 600px) and (max-width: 1399.98px) and (orientation: portrait), (min-width: 600px) and (max-width: 999.98px) {
+  .chat { position: fixed; top: var(--top-h); right: 0; bottom: var(--kb); left: auto; z-index: 70; width: min(460px, 100vw) !important; height: auto; max-width: none; min-width: 0;
+    border-top: 0; border-left: 1px solid var(--line-2); border-radius: 0; box-shadow: -12px 0 40px rgba(0, 0, 0, .28); overflow: hidden;
+    transform: translateX(104%); visibility: hidden; transition: transform .22s ease, visibility 0s linear .22s; padding-right: env(safe-area-inset-right, 0px); }
+  body.chat-open .chat { transform: none; visibility: visible; transition: transform .22s ease; }
+  body.chat-open .scrim { display: block; }
+}
+/* ---------- dock: landscape tablets get the tutor as a toggleable side pane (two panes) ---------- */
+@media (min-width: 1000px) and (max-width: 1399.98px) and (orientation: landscape) {
+  .chat { display: none; width: clamp(320px, 31vw, 440px) !important; min-width: 0; max-width: none; border-left: 1px solid var(--line-2); }
+  body.chat-open .chat { display: flex; }
+}
+/* ---------- sheet: phones keep the bottom sheet; it rides above the on-screen keyboard ---------- */
+@media (max-width: 599.98px) {
+  .chat { bottom: var(--kb); max-height: calc(100dvh - var(--kb) - 24px); visibility: hidden; transition: transform .22s, visibility 0s linear .22s; }
+  body.chat-open .chat { visibility: visible; transition: transform .22s; }
+  body.chat-open .scrim { display: block; top: 0; z-index: 65; }
+  .tutor-btn { padding: 0 10px; } .tutor-btn .tb-l { display: none; }
+  .topbar { gap: 6px; padding-left: max(8px, env(safe-area-inset-left, 0px)); padding-right: max(8px, env(safe-area-inset-right, 0px)); }
+  .brand { display: none; }
+}
+/* portrait tablets (600–900) were getting the phone compaction from the shared sheet — give the reading column room back */
+@media (min-width: 600px) and (max-width: 900px) {
+  .topbar { padding-left: max(12px, env(safe-area-inset-left, 0px)); padding-right: max(12px, env(safe-area-inset-right, 0px)); }
+  .ch-head { padding: 12px 20px 0; }
+  .note { padding: 18px 18px 80px; --note-fs: 16px; }
+  .sec-head { padding: 14px 18px 12px; flex-wrap: nowrap; }
+  .sec-tools { width: auto; padding: 2px 0 0; margin-top: 0; justify-content: flex-end; }
+  .sec > .md { padding: 14px 20px 18px; }
+  .stage { padding: 10px 16px 8px; }
+}
+/* tutor tables: cells keep a readable minimum width and the table scrolls inside its box instead of breaking words per letter */
+#chatLog .md th, #chatLog .md td { min-width: 4.5em; word-break: keep-all; }
+
+/* ---------- slides: no empty box — the slide fits the stage; in tall columns it pins to the top at full width ---------- */
+.stage-img-wrap { background: transparent; border-color: transparent; touch-action: pan-y pinch-zoom; }
+.stage-img-wrap img { border-radius: 6px; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none; }
+.thumbs { -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
+.slides.fitw .stage { flex: none; padding-bottom: 12px; }
+.slides.fitw .stage-img-wrap { flex: none; display: block; overflow: visible; }
+.slides.fitw .stage-img-wrap img { width: 100%; height: auto; max-width: 100%; max-height: none; }
+.slides.fitw .thumbs { flex: 1; min-height: 0; flex-wrap: wrap; align-content: flex-start; overflow-x: hidden; overflow-y: auto; gap: 10px; }
+.slides.fitw .pagetext { max-height: none; }
+
+/* ---------- touch: ≥44px targets, no hover-only controls, 16px inputs (no zoom on focus) ---------- */
+@media (hover: none) {
+  .nav-arrow { opacity: .8; background: rgba(18, 30, 36, .62); border: 1px solid rgba(255, 255, 255, .28); }
+  .stage-img-wrap .nav-arrow:active { opacity: 1; }
+}
+@media (pointer: coarse) {
+  .icon-btn, .icon-btn.sm { width: 44px; height: 44px; }
+  .tutor-btn { width: auto; min-width: 44px; justify-content: center; }
+  #btnLock { height: 44px; }
+  .seg button { min-height: 44px; padding-left: 16px; padding-right: 16px; }
+  .ch-item { min-height: 52px; padding: 10px 12px; }
+  .toc-i { min-height: 44px; align-items: center; }
+  .tabs button { min-height: 48px; padding-left: 16px; padding-right: 16px; }
+  .chip-btn, .ask-btn, .ask-mini, .page-chip, .ghost, .primary, .suggest-q { min-height: 44px; display: inline-flex; align-items: center; justify-content: center; }
+  .suggest-q { justify-content: flex-start; }
+  .chip-btn { padding: 6px 15px; font-size: 14px; }
+  .page-chip { padding: 2px 12px; font-size: 13.5px; }
+  .ask-mini { padding: 2px 14px; font-size: 13.5px; }
+  .copy-btn, .msg-tools button, .diagram-tools button { min-height: 40px; padding: 4px 10px; }
+  .ctx-chip button { min-width: 36px; min-height: 36px; }
+  details.more > summary, .qz-item summary { min-height: 48px; }
+  .quick { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+  .quick::-webkit-scrollbar { display: none; }
+  .quick .chip-btn { flex: none; }
+  .chat-head { flex-wrap: wrap; row-gap: 6px; }
+  .chat-actions { margin-left: auto; }
+  .send { width: 48px; height: 48px; }
+  .input-row textarea, .field input, .field select, .qz-essay, .qz-short input, .qz-xin, .stage-bar input { font-size: 16px; }
+  .stage-bar input { width: 64px; min-height: 44px; }
+  .nav-arrow { width: 46px; height: 76px; }
+  .thumb img { height: 72px; }
+  .qz-dots { gap: 6px; }
+  .qz-dot { min-width: 44px; height: 44px; font-size: 14px; }
+  .qz-opt { min-height: 52px; padding: 12px 16px; }
+  .qz-rub input, .check input { width: 22px; height: 22px; }
+  .qz-num input { min-height: 48px; }
+  /* mock exam: the question navigator stays one swipeable row under the sticky timer bar */
+  .qz-dots.exam { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; top: 60px; padding: 12px 2px 8px; }
+  .qz-dots.exam::-webkit-scrollbar { display: none; }
+  .qz-dots.exam .qz-dot { flex: none; }
+  .sel-ask { padding: 10px 16px; font-size: 15px; }
+}
+/* touch below desk: one-row tutor header (export to a .md file is a desk feature) */
+@media (pointer: coarse) and (max-width: 1399.98px) { #btnExport { display: none; } .chat-head { padding: 8px 10px 8px 14px; } }
+@media (pointer: coarse) and (max-width: 700px) { .qz-dots.exam { top: 104px; } }

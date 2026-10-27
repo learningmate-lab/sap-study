@@ -2,7 +2,7 @@
 <html lang="ko">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>SAP ABAP·Fiori AI 스터디</title>
 <!-- Pretendard Variable 1.3.9 is vendored (assets/vendor/PretendardVariable.woff2, @font-face in app.css) -->
@@ -12,20 +12,22 @@
   (function () { try { var t = localStorage.getItem('sapai:theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {} })();
 </script>
 <style>
-  .gate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: 16px; background: var(--bg); }
+  .gate { position: fixed; inset: 0; z-index: 1000; display: grid; place-items: center; padding: max(16px, env(safe-area-inset-top)) max(16px, env(safe-area-inset-right)) max(16px, env(safe-area-inset-bottom)) max(16px, env(safe-area-inset-left)); background: var(--bg); overflow-y: auto; }
   .gate[hidden] { display: none; }
-  .gate-card { width: min(380px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px 22px; color: var(--text); }
+  .gate-card { width: min(420px, 100%); background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); box-shadow: var(--shadow); padding: 28px 24px 22px; color: var(--text); }
   .gate-card h1 { margin: 0 0 4px; font-size: 20px; display: flex; align-items: center; gap: 8px; }
   .gate-card p { margin: 0 0 18px; color: var(--muted); font-size: 14px; }
-  .gate-card input[type=password] { width: 100%; box-sizing: border-box; padding: 11px 12px; font-size: 15px; border: 1px solid var(--line); border-radius: 10px; background: var(--inset); color: var(--text); }
+  .gate-card input[type=password] { width: 100%; box-sizing: border-box; padding: 11px 12px; min-height: 48px; font-size: 16px; border: 1px solid var(--line); border-radius: 10px; background: var(--inset); color: var(--text); }
   .gate-card input[type=password]:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
   .gate-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 14px; }
-  .gate-card label { display: flex; align-items: center; gap: 6px; font-size: 14px; color: var(--text-2); cursor: pointer; }
-  .gate-card button { border: 0; border-radius: 10px; padding: 10px 18px; font-size: 15px; font-weight: 700; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
+  .gate-card label { display: flex; align-items: center; gap: 8px; min-height: 44px; font-size: 14px; color: var(--text-2); cursor: pointer; }
+  .gate-card label input { width: 20px; height: 20px; margin: 0; }
+  .gate-card button { border: 0; border-radius: 10px; padding: 10px 22px; min-height: 46px; font-size: 16px; font-weight: 700; background: var(--accent); color: var(--accent-ink); cursor: pointer; }
   .gate-card button:disabled { opacity: .6; cursor: progress; }
   .gate-err { min-height: 20px; margin-top: 12px; font-size: 13.5px; color: var(--err); }
   .gate-err.info { color: var(--muted); }
-  #btnLock { width: auto; padding: 0 10px; font-size: 13px; gap: 4px; }
+  #btnLock { width: auto; padding: 0 10px; font-size: 13px; gap: 4px; display: inline-flex; align-items: center; }
+  @media (max-width: 599.98px) { #btnLock .lock-l { display: none; } }
 </style>
 </head>
 <body>
@@ -43,18 +45,20 @@
 </div>
 <div id="app">
   <header class="topbar">
-    <button class="icon-btn only-narrow" id="btnMenu" title="장 목록" aria-label="장 목록">☰</button>
+    <button class="icon-btn" id="btnMenu" title="장 목록" aria-label="장 목록" aria-controls="sidebar" aria-expanded="false">☰</button>
     <div class="brand"><span class="brand-dot"></span><b>AI 스터디</b><span class="brand-sub">SAP ABAP · Fiori</span></div>
     <div class="seg" id="subjectSeg" role="tablist"></div>
     <div class="spacer"></div>
     <div class="usage" id="usage" title="이번 세션에서 쓴 토큰과 예상 비용 (API usage 기준)">0 tok · $0.000</div>
-    <button class="icon-btn" id="btnLock" title="잠금 — 이 기기에 기억한 비밀번호 키를 지우고 잠가요" aria-label="잠금">🔒 잠금</button>
+    <button class="icon-btn" id="btnLock" title="잠금 — 이 기기에 기억한 비밀번호 키를 지우고 잠가요" aria-label="잠금">🔒<span class="lock-l"> 잠금</span></button>
     <button class="icon-btn" id="btnTheme" title="테마 전환" aria-label="테마 전환">◐</button>
     <button class="icon-btn" id="btnSettings" title="설정 (API 키·모델)" aria-label="설정">⚙</button>
+    <button class="icon-btn tutor-btn" id="btnTutor" title="AI 튜터" aria-label="AI 튜터" aria-controls="chat" aria-expanded="false"><span class="spark">✦</span><span class="tb-l">튜터</span></button>
   </header>
 
   <div class="main">
     <aside class="sidebar" id="sidebar">
+      <button class="icon-btn sm side-close" id="btnCloseSide" type="button" title="장 목록 닫기" aria-label="장 목록 닫기">✕</button>
       <div class="side-title" id="sideTitle">장 목록</div>
       <nav id="chapterList"></nav>
       <div class="side-foot">강의자료는 암호화돼 있어요.<br>API 키는 이 브라우저에만 저장돼요.</div>
@@ -81,7 +85,7 @@
           <button class="icon-btn sm" id="btnNewChat" title="새 대화">＋</button>
           <button class="icon-btn sm" id="btnExport" title="대화를 마크다운으로 내보내기">⤓</button>
           <button class="icon-btn sm" id="btnDelChat" title="이 장 대화 삭제">🗑</button>
-          <button class="icon-btn sm only-narrow" id="btnCloseChat" title="닫기">✕</button>
+          <button class="icon-btn sm" id="btnCloseChat" title="튜터 닫기" aria-label="튜터 닫기">✕</button>
         </div>
       </div>
       <div class="chat-log" id="chatLog"></div>
@@ -97,6 +101,7 @@
     </aside>
   </div>
 
+  <div class="scrim" id="scrim" aria-hidden="true"></div>
   <button class="fab only-narrow" id="fabChat">✦ 튜터</button>
   <button class="sel-ask" id="selAsk" hidden>✦ 질문하기</button>
 </div>
@@ -150,7 +155,7 @@
 <script>
 (function () {
   'use strict';
-  var SALT = 'GYd64gsXoThUcqzqYELDOQ==', ITER = 600000, LS = 'sapai:vault';
+  var SALT = 'WpXqk79h8ha8Ph6RAqbrNw==', ITER = 600000, LS = 'sapai:vault';
   var subtle = window.crypto && window.crypto.subtle, KEY = null;
   var gate = document.getElementById('gate'), form = document.getElementById('gateForm'), pw = document.getElementById('gatePw'),
     rem = document.getElementById('gateRemember'), btn = document.getElementById('gateBtn'), err = document.getElementById('gateErr');
