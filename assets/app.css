@@ -748,3 +748,19 @@ button.qz-opt:not(:disabled):hover { border-color: var(--accent); background: va
 /* --- tiles: wider minimum so long SAP terms don't break mid-word; Korean wraps at word boundaries --- */
 .tiles { grid-template-columns: repeat(auto-fit, minmax(190px, 1fr)); }
 .tile-tx b, .tile-tx span, .st-body b, .st-body span, .cmp-h { word-break: keep-all; overflow-wrap: break-word; }
+
+/* --- :::explain — teacher-style explanation next to a figure (paragraphs, numbered walk-through, tables, short code) --- */
+.explain { margin: 16px 0 18px; padding: 13px 20px 8px; background: var(--panel); border: 1px solid var(--line-2); border-left: 5px solid var(--accent); border-radius: 12px; }
+.explain .ex-h { display: flex; align-items: center; gap: 8px; font-weight: 800; font-size: 15px; color: var(--accent); margin-bottom: 2px; word-break: keep-all; }
+.explain .ex-ic { font-size: 16px; }
+.explain .ex-b { color: var(--text); line-height: 1.82; word-break: keep-all; overflow-wrap: break-word; }
+.explain .ex-b > :first-child { margin-top: .35em; }
+.explain .ex-b p { margin: .55em 0 .75em; }
+.explain .ex-b ol, .explain .ex-b ul { margin: .4em 0 .8em; padding-left: 1.5em; }
+.explain .ex-b li { margin: .3em 0; }
+.explain .ex-b ol > li::marker { color: var(--accent); font-weight: 800; }
+.explain .ex-b strong { color: var(--text); background: linear-gradient(transparent 62%, color-mix(in srgb, var(--accent) 22%, transparent) 62%); padding: 0 1px; }
+.explain .tbl { margin: 12px 0 14px; }
+.explain .tbl td, .explain .tbl th { word-break: keep-all; }
+.explain .codebox, .explain pre { margin: 10px 0 12px; }
+@media (max-width: 700px) { .explain { padding: 11px 14px 6px; } .explain .ex-b { line-height: 1.75; } }
